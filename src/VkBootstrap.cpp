@@ -31,6 +31,7 @@
 #endif
 
 #include <mutex>
+#include <algorithm>
 
 namespace vkb {
 
@@ -578,8 +579,7 @@ detail::Result<Instance> InstanceBuilder::build() const {
 
 	uint32_t api_version = VKB_VK_API_VERSION_1_0;
 
-	if (info.required_api_version > VKB_VK_API_VERSION_1_0 ||
-	    info.desired_api_version > VKB_VK_API_VERSION_1_0) {
+	if (info.required_api_version > VKB_VK_API_VERSION_1_0 || info.desired_api_version > VKB_VK_API_VERSION_1_0) {
 		PFN_vkEnumerateInstanceVersion pfn_vkEnumerateInstanceVersion =
 		    detail::vulkan_functions().fp_vkEnumerateInstanceVersion;
 
@@ -891,71 +891,71 @@ std::vector<const char*> check_device_extension_support(
 
 // clang-format off
 bool supports_features(VkPhysicalDeviceFeatures supported,
-                       VkPhysicalDeviceFeatures requested,
-                       std::vector<GenericFeaturesPNextNode> const& extension_supported,
-                       std::vector<GenericFeaturesPNextNode> const& extension_requested) {
-    if (requested.robustBufferAccess && !supported.robustBufferAccess) return false;
-    if (requested.fullDrawIndexUint32 && !supported.fullDrawIndexUint32) return false;
-    if (requested.imageCubeArray && !supported.imageCubeArray) return false;
-    if (requested.independentBlend && !supported.independentBlend) return false;
-    if (requested.geometryShader && !supported.geometryShader) return false;
-    if (requested.tessellationShader && !supported.tessellationShader) return false;
-    if (requested.sampleRateShading && !supported.sampleRateShading) return false;
-    if (requested.dualSrcBlend && !supported.dualSrcBlend) return false;
-    if (requested.logicOp && !supported.logicOp) return false;
-    if (requested.multiDrawIndirect && !supported.multiDrawIndirect) return false;
-    if (requested.drawIndirectFirstInstance && !supported.drawIndirectFirstInstance) return false;
-    if (requested.depthClamp && !supported.depthClamp) return false;
-    if (requested.depthBiasClamp && !supported.depthBiasClamp) return false;
-    if (requested.fillModeNonSolid && !supported.fillModeNonSolid) return false;
-    if (requested.depthBounds && !supported.depthBounds) return false;
-    if (requested.wideLines && !supported.wideLines) return false;
-    if (requested.largePoints && !supported.largePoints) return false;
-    if (requested.alphaToOne && !supported.alphaToOne) return false;
-    if (requested.multiViewport && !supported.multiViewport) return false;
-    if (requested.samplerAnisotropy && !supported.samplerAnisotropy) return false;
-    if (requested.textureCompressionETC2 && !supported.textureCompressionETC2) return false;
-    if (requested.textureCompressionASTC_LDR && !supported.textureCompressionASTC_LDR) return false;
-    if (requested.textureCompressionBC && !supported.textureCompressionBC) return false;
-    if (requested.occlusionQueryPrecise && !supported.occlusionQueryPrecise) return false;
-    if (requested.pipelineStatisticsQuery && !supported.pipelineStatisticsQuery) return false;
-    if (requested.vertexPipelineStoresAndAtomics && !supported.vertexPipelineStoresAndAtomics) return false;
-    if (requested.fragmentStoresAndAtomics && !supported.fragmentStoresAndAtomics) return false;
-    if (requested.shaderTessellationAndGeometryPointSize && !supported.shaderTessellationAndGeometryPointSize) return false;
-    if (requested.shaderImageGatherExtended && !supported.shaderImageGatherExtended) return false;
-    if (requested.shaderStorageImageExtendedFormats && !supported.shaderStorageImageExtendedFormats) return false;
-    if (requested.shaderStorageImageMultisample && !supported.shaderStorageImageMultisample) return false;
-    if (requested.shaderStorageImageReadWithoutFormat && !supported.shaderStorageImageReadWithoutFormat) return false;
-    if (requested.shaderStorageImageWriteWithoutFormat && !supported.shaderStorageImageWriteWithoutFormat) return false;
-    if (requested.shaderUniformBufferArrayDynamicIndexing && !supported.shaderUniformBufferArrayDynamicIndexing) return false;
-    if (requested.shaderSampledImageArrayDynamicIndexing && !supported.shaderSampledImageArrayDynamicIndexing) return false;
-    if (requested.shaderStorageBufferArrayDynamicIndexing && !supported.shaderStorageBufferArrayDynamicIndexing) return false;
-    if (requested.shaderStorageImageArrayDynamicIndexing && !supported.shaderStorageImageArrayDynamicIndexing) return false;
-    if (requested.shaderClipDistance && !supported.shaderClipDistance) return false;
-    if (requested.shaderCullDistance && !supported.shaderCullDistance) return false;
-    if (requested.shaderFloat64 && !supported.shaderFloat64) return false;
-    if (requested.shaderInt64 && !supported.shaderInt64) return false;
-    if (requested.shaderInt16 && !supported.shaderInt16) return false;
-    if (requested.shaderResourceResidency && !supported.shaderResourceResidency) return false;
-    if (requested.shaderResourceMinLod && !supported.shaderResourceMinLod) return false;
-    if (requested.sparseBinding && !supported.sparseBinding) return false;
-    if (requested.sparseResidencyBuffer && !supported.sparseResidencyBuffer) return false;
-    if (requested.sparseResidencyImage2D && !supported.sparseResidencyImage2D) return false;
-    if (requested.sparseResidencyImage3D && !supported.sparseResidencyImage3D) return false;
-    if (requested.sparseResidency2Samples && !supported.sparseResidency2Samples) return false;
-    if (requested.sparseResidency4Samples && !supported.sparseResidency4Samples) return false;
-    if (requested.sparseResidency8Samples && !supported.sparseResidency8Samples) return false;
-    if (requested.sparseResidency16Samples && !supported.sparseResidency16Samples) return false;
-    if (requested.sparseResidencyAliased && !supported.sparseResidencyAliased) return false;
-    if (requested.variableMultisampleRate && !supported.variableMultisampleRate) return false;
-    if (requested.inheritedQueries && !supported.inheritedQueries) return false;
+					   VkPhysicalDeviceFeatures requested,
+					   std::vector<GenericFeaturesPNextNode> const& extension_supported,
+					   std::vector<GenericFeaturesPNextNode> const& extension_requested) {
+	if (requested.robustBufferAccess && !supported.robustBufferAccess) return false;
+	if (requested.fullDrawIndexUint32 && !supported.fullDrawIndexUint32) return false;
+	if (requested.imageCubeArray && !supported.imageCubeArray) return false;
+	if (requested.independentBlend && !supported.independentBlend) return false;
+	if (requested.geometryShader && !supported.geometryShader) return false;
+	if (requested.tessellationShader && !supported.tessellationShader) return false;
+	if (requested.sampleRateShading && !supported.sampleRateShading) return false;
+	if (requested.dualSrcBlend && !supported.dualSrcBlend) return false;
+	if (requested.logicOp && !supported.logicOp) return false;
+	if (requested.multiDrawIndirect && !supported.multiDrawIndirect) return false;
+	if (requested.drawIndirectFirstInstance && !supported.drawIndirectFirstInstance) return false;
+	if (requested.depthClamp && !supported.depthClamp) return false;
+	if (requested.depthBiasClamp && !supported.depthBiasClamp) return false;
+	if (requested.fillModeNonSolid && !supported.fillModeNonSolid) return false;
+	if (requested.depthBounds && !supported.depthBounds) return false;
+	if (requested.wideLines && !supported.wideLines) return false;
+	if (requested.largePoints && !supported.largePoints) return false;
+	if (requested.alphaToOne && !supported.alphaToOne) return false;
+	if (requested.multiViewport && !supported.multiViewport) return false;
+	if (requested.samplerAnisotropy && !supported.samplerAnisotropy) return false;
+	if (requested.textureCompressionETC2 && !supported.textureCompressionETC2) return false;
+	if (requested.textureCompressionASTC_LDR && !supported.textureCompressionASTC_LDR) return false;
+	if (requested.textureCompressionBC && !supported.textureCompressionBC) return false;
+	if (requested.occlusionQueryPrecise && !supported.occlusionQueryPrecise) return false;
+	if (requested.pipelineStatisticsQuery && !supported.pipelineStatisticsQuery) return false;
+	if (requested.vertexPipelineStoresAndAtomics && !supported.vertexPipelineStoresAndAtomics) return false;
+	if (requested.fragmentStoresAndAtomics && !supported.fragmentStoresAndAtomics) return false;
+	if (requested.shaderTessellationAndGeometryPointSize && !supported.shaderTessellationAndGeometryPointSize) return false;
+	if (requested.shaderImageGatherExtended && !supported.shaderImageGatherExtended) return false;
+	if (requested.shaderStorageImageExtendedFormats && !supported.shaderStorageImageExtendedFormats) return false;
+	if (requested.shaderStorageImageMultisample && !supported.shaderStorageImageMultisample) return false;
+	if (requested.shaderStorageImageReadWithoutFormat && !supported.shaderStorageImageReadWithoutFormat) return false;
+	if (requested.shaderStorageImageWriteWithoutFormat && !supported.shaderStorageImageWriteWithoutFormat) return false;
+	if (requested.shaderUniformBufferArrayDynamicIndexing && !supported.shaderUniformBufferArrayDynamicIndexing) return false;
+	if (requested.shaderSampledImageArrayDynamicIndexing && !supported.shaderSampledImageArrayDynamicIndexing) return false;
+	if (requested.shaderStorageBufferArrayDynamicIndexing && !supported.shaderStorageBufferArrayDynamicIndexing) return false;
+	if (requested.shaderStorageImageArrayDynamicIndexing && !supported.shaderStorageImageArrayDynamicIndexing) return false;
+	if (requested.shaderClipDistance && !supported.shaderClipDistance) return false;
+	if (requested.shaderCullDistance && !supported.shaderCullDistance) return false;
+	if (requested.shaderFloat64 && !supported.shaderFloat64) return false;
+	if (requested.shaderInt64 && !supported.shaderInt64) return false;
+	if (requested.shaderInt16 && !supported.shaderInt16) return false;
+	if (requested.shaderResourceResidency && !supported.shaderResourceResidency) return false;
+	if (requested.shaderResourceMinLod && !supported.shaderResourceMinLod) return false;
+	if (requested.sparseBinding && !supported.sparseBinding) return false;
+	if (requested.sparseResidencyBuffer && !supported.sparseResidencyBuffer) return false;
+	if (requested.sparseResidencyImage2D && !supported.sparseResidencyImage2D) return false;
+	if (requested.sparseResidencyImage3D && !supported.sparseResidencyImage3D) return false;
+	if (requested.sparseResidency2Samples && !supported.sparseResidency2Samples) return false;
+	if (requested.sparseResidency4Samples && !supported.sparseResidency4Samples) return false;
+	if (requested.sparseResidency8Samples && !supported.sparseResidency8Samples) return false;
+	if (requested.sparseResidency16Samples && !supported.sparseResidency16Samples) return false;
+	if (requested.sparseResidencyAliased && !supported.sparseResidencyAliased) return false;
+	if (requested.variableMultisampleRate && !supported.variableMultisampleRate) return false;
+	if (requested.inheritedQueries && !supported.inheritedQueries) return false;
 
-    for(size_t i = 0; i < extension_requested.size(); ++i) {
-        auto res = GenericFeaturesPNextNode::match(extension_requested[i], extension_supported[i]);
-        if(!res) return false;
-    }
+	for(size_t i = 0; i < extension_requested.size(); ++i) {
+		auto res = GenericFeaturesPNextNode::match(extension_requested[i], extension_supported[i]);
+		if(!res) return false;
+	}
 
-    return true;
+	return true;
 }
 // clang-format on
 // Finds the first queue which supports the desired operations. Returns QUEUE_INDEX_MAX_VALUE if none is found
@@ -1015,23 +1015,28 @@ uint32_t get_present_queue_index(VkPhysicalDevice const phys_device,
 }
 } // namespace detail
 
-
-PhysicalDeviceSelector::PhysicalDeviceDesc PhysicalDeviceSelector::populate_device_details(VkPhysicalDevice phys_device,
+PhysicalDevice PhysicalDeviceSelector::populate_device_details(VkPhysicalDevice vk_phys_device,
     std::vector<detail::GenericFeaturesPNextNode> const& src_extended_features_chain) const {
-	PhysicalDeviceSelector::PhysicalDeviceDesc desc{};
-	desc.phys_device = phys_device;
+	PhysicalDevice physical_device{};
+	physical_device.physical_device = vk_phys_device;
+	physical_device.surface = instance_info.surface;
+	physical_device.defer_surface_initialization = criteria.defer_surface_initialization;
+	physical_device.instance_version = instance_info.version;
 	auto queue_families = detail::get_vector_noerror<VkQueueFamilyProperties>(
-	    detail::vulkan_functions().fp_vkGetPhysicalDeviceQueueFamilyProperties, phys_device);
-	desc.queue_families = queue_families;
+	    detail::vulkan_functions().fp_vkGetPhysicalDeviceQueueFamilyProperties, vk_phys_device);
+	physical_device.queue_families = queue_families;
 
-	detail::vulkan_functions().fp_vkGetPhysicalDeviceProperties(phys_device, &desc.device_properties);
-	detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures(phys_device, &desc.device_features);
-	detail::vulkan_functions().fp_vkGetPhysicalDeviceMemoryProperties(phys_device, &desc.mem_properties);
+	detail::vulkan_functions().fp_vkGetPhysicalDeviceProperties(vk_phys_device, &physical_device.properties);
+	detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures(vk_phys_device, &physical_device.features);
+	detail::vulkan_functions().fp_vkGetPhysicalDeviceMemoryProperties(
+	    vk_phys_device, &physical_device.memory_properties);
+
+	physical_device.name = physical_device.properties.deviceName;
 
 #if defined(VKB_VK_API_VERSION_1_1)
-	desc.device_features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	physical_device.features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 #else
-	desc.device_features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+	physical_device.features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 #endif
 
 	auto fill_chain = src_extended_features_chain;
@@ -1048,36 +1053,41 @@ PhysicalDeviceSelector::PhysicalDeviceDesc PhysicalDeviceSelector::populate_devi
 		}
 
 #if defined(VKB_VK_API_VERSION_1_1)
-		if (instance_info.version >= VKB_VK_API_VERSION_1_1 && desc.device_properties.apiVersion >= VKB_VK_API_VERSION_1_1) {
+		if (instance_info.version >= VKB_VK_API_VERSION_1_1 &&
+		    physical_device.properties.apiVersion >= VKB_VK_API_VERSION_1_1) {
 			VkPhysicalDeviceFeatures2 local_features{};
 			local_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 			local_features.pNext = &fill_chain.front();
-			detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures2(phys_device, &local_features);
+			detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures2(vk_phys_device, &local_features);
 		} else if (instance_info.supports_properties2_ext) {
 			VkPhysicalDeviceFeatures2KHR local_features_khr{};
 			local_features_khr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 			local_features_khr.pNext = &fill_chain.front();
-			detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures2KHR(phys_device, &local_features_khr);
+			detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures2KHR(vk_phys_device, &local_features_khr);
 		}
 #else
 		VkPhysicalDeviceFeatures2KHR local_features_khr{};
 		local_features_khr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
 		local_features_khr.pNext = &fill_chain.front();
 		if (instance_info.supports_properties2_ext) {
-			detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures2KHR(phys_device, &local_features_khr);
+			detail::vulkan_functions().fp_vkGetPhysicalDeviceFeatures2KHR(vk_phys_device, &local_features_khr);
 		}
 #endif
-		desc.extended_features_chain = fill_chain;
+		physical_device.extended_features_chain = fill_chain;
 	}
 
-	return desc;
+	return physical_device;
 }
 
-PhysicalDeviceSelector::Suitable PhysicalDeviceSelector::is_device_suitable(PhysicalDeviceDesc pd) const {
-	Suitable suitable = Suitable::yes;
+PhysicalDevice::Suitable PhysicalDeviceSelector::is_device_suitable(PhysicalDevice const& pd) const {
+	PhysicalDevice::Suitable suitable = PhysicalDevice::Suitable::yes;
 
-	if (criteria.required_version > pd.device_properties.apiVersion) return Suitable::no;
-	if (criteria.desired_version > pd.device_properties.apiVersion) suitable = Suitable::partial;
+	if (criteria.name.size() > 0 && criteria.name != pd.properties.deviceName)
+		return PhysicalDevice::Suitable::no;
+
+	if (criteria.required_version > pd.properties.apiVersion) return PhysicalDevice::Suitable::no;
+	if (criteria.desired_version > pd.properties.apiVersion)
+		suitable = PhysicalDevice::Suitable::partial;
 
 	bool dedicated_compute = detail::get_dedicated_queue_index(pd.queue_families,
 	                             VK_QUEUE_COMPUTE_BIT,
@@ -1093,89 +1103,85 @@ PhysicalDeviceSelector::Suitable PhysicalDeviceSelector::is_device_suitable(Phys
 	    detail::QUEUE_INDEX_MAX_VALUE;
 
 	bool present_queue =
-	    detail::get_present_queue_index(pd.phys_device, instance_info.surface, pd.queue_families) !=
+	    detail::get_present_queue_index(pd.physical_device, instance_info.surface, pd.queue_families) !=
 	    detail::QUEUE_INDEX_MAX_VALUE;
 
-	if (criteria.require_dedicated_compute_queue && !dedicated_compute) return Suitable::no;
-	if (criteria.require_dedicated_transfer_queue && !dedicated_transfer) return Suitable::no;
-	if (criteria.require_separate_compute_queue && !separate_compute) return Suitable::no;
-	if (criteria.require_separate_transfer_queue && !separate_transfer) return Suitable::no;
+	if (criteria.require_dedicated_compute_queue && !dedicated_compute)
+		return PhysicalDevice::Suitable::no;
+	if (criteria.require_dedicated_transfer_queue && !dedicated_transfer)
+		return PhysicalDevice::Suitable::no;
+	if (criteria.require_separate_compute_queue && !separate_compute)
+		return PhysicalDevice::Suitable::no;
+	if (criteria.require_separate_transfer_queue && !separate_transfer)
+		return PhysicalDevice::Suitable::no;
 	if (criteria.require_present && !present_queue && !criteria.defer_surface_initialization)
-		return Suitable::no;
+		return PhysicalDevice::Suitable::no;
 
 	auto required_extensions_supported =
-	    detail::check_device_extension_support(pd.phys_device, criteria.required_extensions);
+	    detail::check_device_extension_support(pd.physical_device, criteria.required_extensions);
 	if (required_extensions_supported.size() != criteria.required_extensions.size())
-		return Suitable::no;
+		return PhysicalDevice::Suitable::no;
 
 	auto desired_extensions_supported =
-	    detail::check_device_extension_support(pd.phys_device, criteria.desired_extensions);
+	    detail::check_device_extension_support(pd.physical_device, criteria.desired_extensions);
 	if (desired_extensions_supported.size() != criteria.desired_extensions.size())
-		suitable = Suitable::partial;
+		suitable = PhysicalDevice::Suitable::partial;
 
-	bool swapChainAdequate = false;
-	if (criteria.defer_surface_initialization) {
-		swapChainAdequate = true;
-	} else if (!instance_info.headless) {
+	if (!criteria.defer_surface_initialization && criteria.require_present) {
 		std::vector<VkSurfaceFormatKHR> formats;
 		std::vector<VkPresentModeKHR> present_modes;
 
 		auto formats_ret = detail::get_vector<VkSurfaceFormatKHR>(formats,
 		    detail::vulkan_functions().fp_vkGetPhysicalDeviceSurfaceFormatsKHR,
-		    pd.phys_device,
+		    pd.physical_device,
 		    instance_info.surface);
 		auto present_modes_ret = detail::get_vector<VkPresentModeKHR>(present_modes,
 		    detail::vulkan_functions().fp_vkGetPhysicalDeviceSurfacePresentModesKHR,
-		    pd.phys_device,
+		    pd.physical_device,
 		    instance_info.surface);
 
-		if (formats_ret == VK_SUCCESS && present_modes_ret == VK_SUCCESS) {
-			swapChainAdequate = !formats.empty() && !present_modes.empty();
+		if (formats_ret != VK_SUCCESS || present_modes_ret != VK_SUCCESS || formats.empty() ||
+		    present_modes.empty()) {
+			return PhysicalDevice::Suitable::no;
 		}
 	}
-	if (criteria.require_present && !swapChainAdequate) return Suitable::no;
 
-	if (pd.device_properties.deviceType != static_cast<VkPhysicalDeviceType>(criteria.preferred_type)) {
-		if (criteria.allow_any_type)
-			suitable = Suitable::partial;
-		else
-			return Suitable::no;
+	if (!criteria.allow_any_type &&
+	    pd.properties.deviceType != static_cast<VkPhysicalDeviceType>(criteria.preferred_type)) {
+		suitable = PhysicalDevice::Suitable::partial;
 	}
 
 	bool required_features_supported = detail::supports_features(
-	    pd.device_features, criteria.required_features, pd.extended_features_chain, criteria.extended_features_chain);
-	if (!required_features_supported) return Suitable::no;
+	    pd.features, criteria.required_features, pd.extended_features_chain, criteria.extended_features_chain);
+	if (!required_features_supported) return PhysicalDevice::Suitable::no;
 
-	bool has_required_memory = false;
-	bool has_preferred_memory = false;
-	for (uint32_t i = 0; i < pd.mem_properties.memoryHeapCount; i++) {
-		if (pd.mem_properties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
-			if (pd.mem_properties.memoryHeaps[i].size > criteria.required_mem_size) {
-				has_required_memory = true;
-			}
-			if (pd.mem_properties.memoryHeaps[i].size > criteria.desired_mem_size) {
-				has_preferred_memory = true;
+	for (uint32_t i = 0; i < pd.memory_properties.memoryHeapCount; i++) {
+		if (pd.memory_properties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
+			if (pd.memory_properties.memoryHeaps[i].size < criteria.required_mem_size) {
+				return PhysicalDevice::Suitable::no;
+			} else if (pd.memory_properties.memoryHeaps[i].size < criteria.desired_mem_size) {
+				suitable = PhysicalDevice::Suitable::partial;
 			}
 		}
 	}
-	if (!has_required_memory) return Suitable::no;
-	if (!has_preferred_memory) suitable = Suitable::partial;
 
 	return suitable;
 }
+// delegate construction to the one with an explicit surface parameter
+PhysicalDeviceSelector::PhysicalDeviceSelector(Instance const& instance)
+: PhysicalDeviceSelector(instance, VK_NULL_HANDLE) {}
 
-PhysicalDeviceSelector::PhysicalDeviceSelector(Instance const& instance) {
+PhysicalDeviceSelector::PhysicalDeviceSelector(Instance const& instance, VkSurfaceKHR surface) {
 	instance_info.instance = instance.instance;
-	instance_info.headless = instance.headless;
 	instance_info.version = instance.instance_version;
 	instance_info.supports_properties2_ext = instance.supports_properties2_ext;
+	instance_info.surface = surface;
 	criteria.require_present = !instance.headless;
 	criteria.required_version = instance.instance_version;
 	criteria.desired_version = instance.instance_version;
 }
 
-detail::Result<PhysicalDevice> PhysicalDeviceSelector::select() const {
-
+detail::Result<std::vector<PhysicalDevice>> PhysicalDeviceSelector::select_impl(DeviceSelectionMode selection) const {
 #if !defined(NDEBUG)
 	// Validation
 	for (const auto& node : criteria.extended_features_chain) {
@@ -1189,72 +1195,111 @@ detail::Result<PhysicalDevice> PhysicalDeviceSelector::select() const {
 	}
 #endif
 
-	if (!instance_info.headless && !criteria.defer_surface_initialization) {
+	if (criteria.require_present && !criteria.defer_surface_initialization) {
 		if (instance_info.surface == VK_NULL_HANDLE)
-			return detail::Result<PhysicalDevice>{ PhysicalDeviceError::no_surface_provided };
+			return detail::Result<std::vector<PhysicalDevice>>{ PhysicalDeviceError::no_surface_provided };
 	}
 
-	std::vector<VkPhysicalDevice> physical_devices;
+	// Get the VkPhysicalDevice handles on the system
+	std::vector<VkPhysicalDevice> vk_physical_devices;
 
-	auto physical_devices_ret = detail::get_vector<VkPhysicalDevice>(
-	    physical_devices, detail::vulkan_functions().fp_vkEnumeratePhysicalDevices, instance_info.instance);
-	if (physical_devices_ret != VK_SUCCESS) {
-		return detail::Result<PhysicalDevice>{ PhysicalDeviceError::failed_enumerate_physical_devices,
-			physical_devices_ret };
+	auto vk_physical_devices_ret = detail::get_vector<VkPhysicalDevice>(
+	    vk_physical_devices, detail::vulkan_functions().fp_vkEnumeratePhysicalDevices, instance_info.instance);
+	if (vk_physical_devices_ret != VK_SUCCESS) {
+		return detail::Result<std::vector<PhysicalDevice>>{ PhysicalDeviceError::failed_enumerate_physical_devices,
+			vk_physical_devices_ret };
 	}
-	if (physical_devices.size() == 0) {
-		return detail::Result<PhysicalDevice>{ PhysicalDeviceError::no_physical_devices_found };
-	}
-
-	std::vector<PhysicalDeviceDesc> phys_device_descriptions;
-	for (auto& phys_device : physical_devices) {
-		phys_device_descriptions.push_back(populate_device_details(phys_device, criteria.extended_features_chain));
+	if (vk_physical_devices.size() == 0) {
+		return detail::Result<std::vector<PhysicalDevice>>{ PhysicalDeviceError::no_physical_devices_found };
 	}
 
-	PhysicalDeviceDesc selected_device{};
+	auto fill_out_phys_dev_with_criteria = [&](PhysicalDevice& phys_dev) {
+		phys_dev.features = criteria.required_features;
+		phys_dev.extended_features_chain = criteria.extended_features_chain;
+		phys_dev.extensions_to_enable.insert(phys_dev.extensions_to_enable.end(),
+		    criteria.required_extensions.begin(),
+		    criteria.required_extensions.end());
+		auto desired_extensions_supported =
+		    detail::check_device_extension_support(phys_dev.physical_device, criteria.desired_extensions);
+		phys_dev.extensions_to_enable.insert(phys_dev.extensions_to_enable.end(),
+		    desired_extensions_supported.begin(),
+		    desired_extensions_supported.end());
+	};
 
-	if (criteria.use_first_gpu_unconditionally) {
-		selected_device = phys_device_descriptions.at(0);
-	} else {
-		for (const auto& device : phys_device_descriptions) {
-			auto suitable = is_device_suitable(device);
-			if (suitable == Suitable::yes) {
-				selected_device = device;
-				break;
-			} else if (suitable == Suitable::partial) {
-				selected_device = device;
-			}
+	// if this option is set, always return only the first physical device found
+	if (criteria.use_first_gpu_unconditionally && vk_physical_devices.size() > 0) {
+		PhysicalDevice physical_device =
+		    populate_device_details(vk_physical_devices[0], criteria.extended_features_chain);
+		fill_out_phys_dev_with_criteria(physical_device);
+		return std::vector<PhysicalDevice>{ physical_device };
+	}
+
+	// Populate their details and check their suitability
+	std::vector<PhysicalDevice> physical_devices;
+	for (auto& vk_physical_device : vk_physical_devices) {
+		PhysicalDevice phys_dev = populate_device_details(vk_physical_device, criteria.extended_features_chain);
+		phys_dev.suitable = is_device_suitable(phys_dev);
+		if (phys_dev.suitable != PhysicalDevice::Suitable::no) {
+			physical_devices.push_back(phys_dev);
 		}
 	}
 
-	if (selected_device.phys_device == VK_NULL_HANDLE) {
-		return detail::Result<PhysicalDevice>{ PhysicalDeviceError::no_suitable_device };
-	}
-	PhysicalDevice out_device{};
-	out_device.physical_device = selected_device.phys_device;
-	out_device.surface = instance_info.surface;
-	out_device.features = criteria.required_features;
-	out_device.extended_features_chain = criteria.extended_features_chain;
-	out_device.properties = selected_device.device_properties;
-	out_device.memory_properties = selected_device.mem_properties;
-	out_device.queue_families = selected_device.queue_families;
-	out_device.defer_surface_initialization = criteria.defer_surface_initialization;
-	out_device.instance_version = instance_info.version;
+	// sort the list into fully and partially suitable devices. use stable_partition to maintain relative order
+	const auto partition_index = std::stable_partition(physical_devices.begin(),
+	    physical_devices.end(),
+	    [](auto const& pd) { return pd.suitable == PhysicalDevice::Suitable::yes; });
 
-	out_device.extensions_to_enable.insert(out_device.extensions_to_enable.end(),
-	    criteria.required_extensions.begin(),
-	    criteria.required_extensions.end());
-	auto desired_extensions_supported =
-	    detail::check_device_extension_support(out_device.physical_device, criteria.desired_extensions);
-	out_device.extensions_to_enable.insert(out_device.extensions_to_enable.end(),
-	    desired_extensions_supported.begin(),
-	    desired_extensions_supported.end());
-	return out_device;
+	// Remove the partially suitable elements if they aren't desired
+	if (selection == DeviceSelectionMode::only_fully_suitable) {
+		physical_devices.erase(partition_index, physical_devices.end() - 1);
+	}
+
+	return physical_devices;
 }
 
+detail::Result<PhysicalDevice> PhysicalDeviceSelector::select(DeviceSelectionMode selection) const {
+	auto const selected_devices = select_impl(selection);
+
+	if (!selected_devices) return detail::Result<PhysicalDevice>{ selected_devices.error() };
+	if (selected_devices.value().size() == 0) {
+		return detail::Result<PhysicalDevice>{ PhysicalDeviceError::no_suitable_device };
+	}
+
+	return selected_devices.value().at(0);
+}
+
+// Return all devices which are considered suitable - intended for applications which want to let the user pick the physical device
+detail::Result<std::vector<PhysicalDevice>> PhysicalDeviceSelector::select_devices(
+    DeviceSelectionMode selection) const {
+	auto const selected_devices = select_impl(selection);
+	if (!selected_devices)
+		return detail::Result<std::vector<PhysicalDevice>>{ selected_devices.error() };
+	if (selected_devices.value().size() == 0) {
+		return detail::Result<std::vector<PhysicalDevice>>{ PhysicalDeviceError::no_suitable_device };
+	}
+	return selected_devices.value();
+}
+
+detail::Result<std::vector<std::string>> PhysicalDeviceSelector::select_device_names(
+    DeviceSelectionMode selection) const {
+	auto const selected_devices = select_impl(selection);
+	if (!selected_devices)
+		return detail::Result<std::vector<std::string>>{ selected_devices.error() };
+	if (selected_devices.value().size() == 0) {
+		return detail::Result<std::vector<std::string>>{ PhysicalDeviceError::no_suitable_device };
+	}
+	std::vector<std::string> names;
+	for (const auto& pd : selected_devices.value()) {
+		names.push_back(pd.name);
+	}
+	return names;
+}
 PhysicalDeviceSelector& PhysicalDeviceSelector::set_surface(VkSurfaceKHR surface) {
 	instance_info.surface = surface;
-	instance_info.headless = false;
+	return *this;
+}
+PhysicalDeviceSelector& PhysicalDeviceSelector::set_name(std::string const& name) {
+	criteria.name = name;
 	return *this;
 }
 PhysicalDeviceSelector& PhysicalDeviceSelector::prefer_gpu_device_type(PreferredDeviceType type) {
@@ -1355,6 +1400,7 @@ PhysicalDeviceSelector& PhysicalDeviceSelector::select_first_device_unconditiona
 	return *this;
 }
 
+// PhysicalDevice
 bool PhysicalDevice::has_dedicated_compute_queue() const {
 	return detail::get_dedicated_queue_index(queue_families, VK_QUEUE_COMPUTE_BIT, VK_QUEUE_TRANSFER_BIT) !=
 	       detail::QUEUE_INDEX_MAX_VALUE;
