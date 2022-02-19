@@ -870,17 +870,12 @@ void destroy_debug_messenger(VkInstance const instance, VkDebugUtilsMessengerEXT
 
 namespace detail {
 
-std::vector<const char*> check_device_extension_support(
-    VkPhysicalDevice device, std::vector<const char*> desired_extensions) {
-	std::vector<VkExtensionProperties> available_extensions;
-	auto available_extensions_ret = detail::get_vector<VkExtensionProperties>(
-	    available_extensions, detail::vulkan_functions().fp_vkEnumerateDeviceExtensionProperties, device, nullptr);
-	if (available_extensions_ret != VK_SUCCESS) return {};
-
-	std::vector<const char*> extensions_to_enable;
-	for (const auto& extension : available_extensions) {
+std::vector<std::string> check_device_extension_support(std::vector<std::string> const& available_extensions,
+    std::vector<std::string> const& desired_extensions) {
+	std::vector<std::string> extensions_to_enable;
+	for (const auto& avail_ext : available_extensions) {
 		for (auto& req_ext : desired_extensions) {
-			if (strcmp(req_ext, extension.extensionName) == 0) {
+			if (avail_ext == req_ext) {
 				extensions_to_enable.push_back(req_ext);
 				break;
 			}
@@ -1033,6 +1028,16 @@ PhysicalDevice PhysicalDeviceSelector::populate_device_details(VkPhysicalDevice 
 
 	physical_device.name = physical_device.properties.deviceName;
 
+	std::vector<VkExtensionProperties> available_extensions;
+	auto available_extensions_ret = detail::get_vector<VkExtensionProperties>(available_extensions,
+	    detail::vulkan_functions().fp_vkEnumerateDeviceExtensionProperties,
+	    vk_phys_device,
+	    nullptr);
+	if (available_extensions_ret != VK_SUCCESS) return physical_device;
+	for (const auto& ext : available_extensions) {
+		physical_device.extensions.push_back(&ext.extensionName[0]);
+	}
+
 #if defined(VKB_VK_API_VERSION_1_1)
 	physical_device.features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 #else
@@ -1118,12 +1123,12 @@ PhysicalDevice::Suitable PhysicalDeviceSelector::is_device_suitable(PhysicalDevi
 		return PhysicalDevice::Suitable::no;
 
 	auto required_extensions_supported =
-	    detail::check_device_extension_support(pd.physical_device, criteria.required_extensions);
+	    detail::check_device_extension_support(pd.extensions, criteria.required_extensions);
 	if (required_extensions_supported.size() != criteria.required_extensions.size())
 		return PhysicalDevice::Suitable::no;
 
 	auto desired_extensions_supported =
-	    detail::check_device_extension_support(pd.physical_device, criteria.desired_extensions);
+	    detail::check_device_extension_support(pd.extensions, criteria.desired_extensions);
 	if (desired_extensions_supported.size() != criteria.desired_extensions.size())
 		suitable = PhysicalDevice::Suitable::partial;
 
@@ -1216,12 +1221,12 @@ detail::Result<std::vector<PhysicalDevice>> PhysicalDeviceSelector::select_impl(
 	auto fill_out_phys_dev_with_criteria = [&](PhysicalDevice& phys_dev) {
 		phys_dev.features = criteria.required_features;
 		phys_dev.extended_features_chain = criteria.extended_features_chain;
-		phys_dev.extensions_to_enable.insert(phys_dev.extensions_to_enable.end(),
+		phys_dev.extensions.insert(phys_dev.extensions.end(),
 		    criteria.required_extensions.begin(),
 		    criteria.required_extensions.end());
 		auto desired_extensions_supported =
-		    detail::check_device_extension_support(phys_dev.physical_device, criteria.desired_extensions);
-		phys_dev.extensions_to_enable.insert(phys_dev.extensions_to_enable.end(),
+		    detail::check_device_extension_support(phys_dev.extensions, criteria.desired_extensions);
+		phys_dev.extensions.insert(phys_dev.extensions.end(),
 		    desired_extensions_supported.begin(),
 		    desired_extensions_supported.end());
 	};
@@ -1343,8 +1348,9 @@ PhysicalDeviceSelector& PhysicalDeviceSelector::add_required_extension(const cha
 	return *this;
 }
 PhysicalDeviceSelector& PhysicalDeviceSelector::add_required_extensions(std::vector<const char*> extensions) {
-	criteria.required_extensions.insert(
-	    criteria.required_extensions.end(), extensions.begin(), extensions.end());
+	for (const auto& ext : extensions) {
+		criteria.required_extensions.push_back(ext);
+	}
 	return *this;
 }
 PhysicalDeviceSelector& PhysicalDeviceSelector::add_desired_extension(const char* extension) {
@@ -1352,8 +1358,9 @@ PhysicalDeviceSelector& PhysicalDeviceSelector::add_desired_extension(const char
 	return *this;
 }
 PhysicalDeviceSelector& PhysicalDeviceSelector::add_desired_extensions(std::vector<const char*> extensions) {
-	criteria.desired_extensions.insert(
-	    criteria.desired_extensions.end(), extensions.begin(), extensions.end());
+	for (const auto& ext : extensions) {
+		criteria.desired_extensions.push_back(ext);
+	}
 	return *this;
 }
 PhysicalDeviceSelector& PhysicalDeviceSelector::set_minimum_version(uint32_t major, uint32_t minor) {
@@ -1420,7 +1427,7 @@ bool PhysicalDevice::has_separate_transfer_queue() const {
 std::vector<VkQueueFamilyProperties> PhysicalDevice::get_queue_families() const {
 	return queue_families;
 }
-std::vector<const char*> PhysicalDevice::get_extensions() const { return extensions_to_enable; }
+std::vector<std::string> PhysicalDevice::get_extensions() const { return extensions; }
 PhysicalDevice::operator VkPhysicalDevice() const { return this->physical_device; }
 
 // ---- Queues ---- //
@@ -1528,7 +1535,10 @@ detail::Result<Device> DeviceBuilder::build() const {
 		queueCreateInfos.push_back(queue_create_info);
 	}
 
-	std::vector<const char*> extensions = physical_device.extensions_to_enable;
+	std::vector<const char*> extensions;
+	for (const auto& ext : physical_device.extensions) {
+		extensions.push_back(ext.c_str());
+	}
 	if (physical_device.surface != VK_NULL_HANDLE || physical_device.defer_surface_initialization)
 		extensions.push_back({ VK_KHR_SWAPCHAIN_EXTENSION_NAME });
 
